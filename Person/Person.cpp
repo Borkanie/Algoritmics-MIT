@@ -3,9 +3,15 @@
 #include "Person.hpp"
 namespace Person
 {
-        std::vector<Task::Task> Person::GetOptimalTask(std::vector<Task::Task> possibleTasks){
+    std::vector<Task::Task> Person::GetOptimalTask(std::vector<Task::Task> possibleTasks)
+    {
         std::vector<Task::Task> tasks;
 
         return tasks;
     };
+    
+    void Person::DisplayTasks(std::vector<Task::Task> tasks){
+
+    }
+
 }

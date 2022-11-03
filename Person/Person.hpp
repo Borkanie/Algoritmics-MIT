@@ -20,5 +20,6 @@ namespace Person
             os << std::endl;
             return os;
         }
+        void DisplayTasks(std::vector<Task::Task> tasks);
     };
 }
