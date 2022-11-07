@@ -1,14 +1,24 @@
 #include "Task.hpp"
 #include "vector"
 #include <ctime>
+#include <stdlib.h>
+
 namespace Task
 {
+    
     int DisplayDayAsFlatLine(int minutePerBar)
     {
         std::cout << "[";
-        for (int i = 0; i < 24 * 60; i += minutePerBar)
+        for (int i = 0; i < 24 * 60 / minutePerBar; i++)
         {
-            std::cout << "-";
+            if (i * minutePerBar % 60 == 0)
+            {
+                std::cout << "|";
+            }
+            else
+            {
+                std::cout << "-";
+            }
         }
         std::cout << "]";
         return 24 * 60 / minutePerBar;
@@ -17,12 +27,22 @@ namespace Task
     {
         return this->startingTime + this->duration;
     }
+
     bool Task::OverLap(const Task task) const
     {
-        return (this->EndTime() > task.startingTime && this->EndTime() < task.EndTime()) || (this->startingTime < task.EndTime() && this->startingTime > task.startingTime);
+        if(this->startingTime == 0){
+            return false;
+        }
+        bool taskStartsBeforeThisEnds=task.startingTime <= this->EndTime() ;
+        bool taskStartAfterThisStarts=task.startingTime >= this->startingTime;
+        bool thisStartsBeforeTaskEnds = this->startingTime <= task.EndTime();
+        bool thisStartsAfterTAskStarts = this->startingTime >= task.startingTime;
+        bool taskStartWhileThisIsRunning =( taskStartsBeforeThisEnds && taskStartAfterThisStarts);
+        bool thisStartsWhileTaskIsRunning = (thisStartsBeforeTaskEnds && thisStartsAfterTAskStarts);
+        return taskStartWhileThisIsRunning || thisStartsWhileTaskIsRunning;
     }
 
-    bool Task::OverLapsWithArray(const std::vector<Task> tasks) const
+    bool Task::DoesNotOverLapWithArray(const std::vector<Task> tasks) const
     {
         for (int i = 0; i < tasks.size(); i++)
         {
@@ -40,21 +60,21 @@ namespace Task
         vector<vector<Task>> nonOverlappingTasks;
         nonOverlappingTasks.push_back(vector<Task>());
         nonOverlappingTasks[0].push_back(tasks[0]);
-        tasks.erase(tasks.begin()+0);
+        tasks.erase(tasks.begin() + 0);
         while (tasks.size() > 0)
         {
             int suitableIndex = -1;
             // we search for the first array that can hold this task
             for (int i = 0; i < nonOverlappingTasks.size(); i++)
             {
-                if (!tasks[0].OverLapsWithArray(nonOverlappingTasks[i]))
+                if (tasks[0].DoesNotOverLapWithArray(nonOverlappingTasks[i]))
                 {
                     suitableIndex = i;
                     break;
                 }
             }
             // if we found an array we add it there
-            if (suitableIndex > 0)
+            if (suitableIndex >= 0)
             {
                 nonOverlappingTasks[suitableIndex].push_back(tasks[0]);
             }
@@ -64,26 +84,29 @@ namespace Task
                 nonOverlappingTasks[nonOverlappingTasks.size() - 1].push_back(tasks[0]);
             }
             // we remove the task from the array
-            tasks.erase(tasks.begin()+0);
+            tasks.erase(tasks.begin() + 0);
         }
         return nonOverlappingTasks;
     }
 
-    void DisplayTaskNonOverlappingArray(const std::vector<Task> tasks, int minutePerBar){
-        long startingTime=std::time(0);
-        int currenttask=0;
-        for(int i=0;i<24 * 60; i += minutePerBar){
-            if(startingTime+(minutePerBar-1)*60*1000>=tasks[currenttask].startingTime)
-            {
-                std::cout<<tasks[currenttask].Duration();
-                DisplayTaskAsFlatLine(tasks[currenttask]);
-                i+=tasks[currenttask].duration/(1000*minutePerBar);
-                currenttask++;
-                continue;
-            }
-            std::cout<<"_";
+    void DisplayTaskNonOverlappingArray(const std::vector<Task> tasks, int minutePerBar)
+    {
+        long startingTime = std::time(0);
+        int currenttask = 0;
+        for (int i = 0; i < 24 * 60 / minutePerBar; i++)
+        {
+            if ((startingTime + (i - 1) * minutePerBar * 60 * 1000 <= tasks[currenttask].startingTime))
+                if ((tasks[currenttask].startingTime <= startingTime + (i + 1) * minutePerBar * 60 * 1000))
+                {
+                    // std::cout<<std::ctime(&tasks[currenttask].startingTime);
+                    DisplayTaskAsFlatLine(tasks[currenttask], minutePerBar);
+                    i += tasks[currenttask].duration / (60 * 1000 * minutePerBar);
+                    currenttask++;
+                    continue;
+                }
+            std::cout << " ";
         }
-        std::cout<<std::endl;
+        std::cout << std::endl;
     }
 
     void DisplayTaskArray(std::vector<Task> tasks, int minutePerBar)
@@ -91,25 +114,25 @@ namespace Task
 
         // Length of the day
         int numberOfDotsOnLine = DisplayDayAsFlatLine(minutePerBar);
-        std::cout<<std::endl;
+        std::cout << std::endl;
         // We always have to start from '1' becaus of '['
 
         // we split them into lsits of non ovelapping arrays
         std::vector<std::vector<Task>> nonOverlappingArrays = GetNonOverlappingArraysFromArray(tasks);
 
-        for(int i=0;i<nonOverlappingArrays.size();i++){
-            DisplayTaskNonOverlappingArray(nonOverlappingArrays[i],minutePerBar);
+        for (int i = 0; i < nonOverlappingArrays.size(); i++)
+        {
+            DisplayTaskNonOverlappingArray(nonOverlappingArrays[i], minutePerBar);
         }
     }
 
     void DisplayTaskAsFlatLine(Task task, int minutePerBar)
     {
-        std::cout << "[";
-        for (int i = 0; i < task.duration / (1000 * 60); i += minutePerBar)
+        for (int i = 0; i <= task.duration / (1000 * 60); i += minutePerBar)
         {
-            std::cout << "-";
+            std::cout << task.Sign;
         }
-        std::cout << "]";
+
     }
 
     int partition(std::vector<Task> &arr, int low, int high, long pivot)

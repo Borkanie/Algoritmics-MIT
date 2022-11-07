@@ -4,7 +4,10 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <conio.h>
+#include <stdlib.h>
 #pragma once
+
 namespace Task
 {
     enum TaskType
@@ -19,6 +22,7 @@ namespace Task
         Side_Projects = 8,
         Side_Hustle = 9,
     };
+
     /* An abstraction of a class. Multiple tasks can be related or not.
     Each group fo ralated tasks can be seen as a tree with a variable number of leafes.
     The cost of the task will only be represinted by the time spent on the task.
@@ -55,6 +59,9 @@ namespace Task
         TaskType TaskType;
         // The list of children
         std::vector<Task> Children;
+        // Color to print it in schedule
+        char Sign = '-';
+
         friend std::ostream& operator<<(std::ostream& os,const Task& task){
             os<<std::endl << "Task: " << task.name << " with the duration of: " << task.Duration() << " and the value of: " << task.value;
             if(task.Children.size()>0){
@@ -68,7 +75,7 @@ namespace Task
         }
         long EndTime() const;
         bool OverLap(const Task task) const;
-        bool OverLapsWithArray(const std::vector<Task> tasks) const;
+        bool DoesNotOverLapWithArray(const std::vector<Task> tasks) const;
     };
     // A function meant to display a Task as a flat line in minutes
     void DisplayTaskAsFlatLine(Task task,int minutePerBar=30);
