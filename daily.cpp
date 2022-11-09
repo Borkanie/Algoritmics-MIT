@@ -2,6 +2,7 @@
 #include <vector>
 #include "./Task/Task.hpp"
 #include "./Person/Person.hpp"
+#include "./Task/TaskStreamBuffer.hpp"
 #include <cstdlib>
 #include <ctime>
 
@@ -81,13 +82,16 @@ namespace daily
             task.duration = CTimeSpan(0, 0, rand() %59, 0);
             task.value = rand();
             int isChild = rand() % 3;
-            if (isChild >= 1 && tasks.size() > 2)
+            if (isChild == 0 && tasks.size() > 2)
             {
-                int parentIndex=rand() % (tasks.size() - 1);
-                tasks[parentIndex].Children.push_back(task);
-                task.Sign=tasks[parentIndex].Sign;
-                
-            }else{
+                for(int parentIndex = 0;parentIndex < tasks.size();parentIndex++){
+                    if(tasks[parentIndex].EndTime()<task.startingTime && (rand()%3>1)){
+                        tasks[parentIndex].Children.push_back(task);
+                        task.Sign=tasks[parentIndex].Sign;
+                    }
+                }
+            }
+            if(task.Sign == '-'){
                 uint8_t colorInt=0;
                 while(colorInt==0){
                     colorInt = ((uint8_t)rand()%16);
@@ -134,13 +138,19 @@ namespace daily
 */
 int main(int arg, char **args)
 {
+    TaskStreamBuffer::TasksStreamBuffer taskBuffer(10,24);
     // we generate random tasks
     vector<Task::Task> tasks = daily::GetRandomTasks(20, false);
     // daily::testDaily();
     //  we sort them by starting date
     Task::QuickSortByStartingTime(tasks, 0, tasks.size() - 1);
-    Task::DisplayTaskArray(tasks, 10);
-    Person::RecursiveOptimalTaskByPoints(tasks,0);
-    Task::DisplayTaskArray(Person::bestRow, 10);
+    std::vector<std::vector<Task::Task>> nonOverlapingArrays=Task::GetNonOverlappingArraysFromArray(tasks);
+    for(auto taskArray : nonOverlapingArrays){
+        taskBuffer.AddTasksArray(taskArray);
+    }
+    std::cout<<taskBuffer;
+    //Task::DisplayTaskArray(tasks, 10);
+    //Person::RecursiveOptimalTaskByPoints(tasks,0);
+    //Task::DisplayTaskArray(Person::bestRow, 10);
     return 0;
 }
